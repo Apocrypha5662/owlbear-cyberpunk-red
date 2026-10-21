@@ -1,0 +1,19 @@
+{
+  "manifest_version": 1,
+  "name": "赛博朋克RED工具箱",
+  "version": "1.0.0",
+  "description": "CPR本体+鲨鱼包数据驱动规则包：骰盘、战斗全流程（射程DV/命中部位/防具削甲/重创/死亡豁免）、先攻面板、私密金钱、双通道角色导入、鲨包速查。中文双主题。",
+  "icon": "icon.svg",
+  "author": "owlbear-cpr",
+  "action": {
+    "title": "CPR工具箱",
+    "icon": "icon.svg",
+    "popover": "popover.html",
+    "width": 430,
+    "height": 680
+  },
+  "background_url": "background.js",
+  "permissions": [
+    { "name": "clipboard-write", "reason": "导出角色数据JSON与资金流水时写入剪贴板" }
+  ]
+}
