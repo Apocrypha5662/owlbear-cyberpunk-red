@@ -3,12 +3,103 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>赛博朋克RED工具箱</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>CPR工具箱</title>
+  <style>
+:root {
+  --bg: #f5f6fa; --panel: #ffffff; --text: #1c1e26; --muted: #6b7280;
+  --accent: #e2231a; --accent2: #f5e642; --border: #d9dbe3; --input-bg: #ffffff;
+  --chip: #eef0f5; --ok: #16a34a; --warn: #d97706; --bad: #dc2626;
+}
+[data-theme="dark"] {
+  --bg: #12141c; --panel: #1b1e2b; --text: #e8eaf2; --muted: #9aa1b2;
+  --accent: #ff4b3e; --accent2: #f5e642; --border: #2c3040; --input-bg: #232739;
+  --chip: #262b3d; --ok: #4ade80; --warn: #fbbf24; --bad: #f87171;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font: 13px/1.5 system-ui, "Microsoft YaHei", sans-serif; }
+body { padding: 8px; }
+h1, h2, h3 { margin: 6px 0; font-size: 14px; }
+button {
+  background: var(--panel); color: var(--text); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 12.5px;
+}
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.small { padding: 2px 7px; font-size: 11.5px; border-radius: 6px; }
+input, select, textarea {
+  background: var(--input-bg); color: var(--text); border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 6px; font-size: 12.5px; width: 100%;
+}
+textarea { min-height: 90px; font-family: inherit; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.tabs button { border-radius: 8px 8px 0 0; }
+.tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+.row { display: flex; gap: 6px; align-items: center; margin: 4px 0; flex-wrap: wrap; }
+.row > label { min-width: 64px; color: var(--muted); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.chip { display: inline-block; background: var(--chip); border-radius: 6px; padding: 2px 8px; margin: 2px; font-size: 12px; cursor: pointer; }
+.chip.on { background: var(--accent); color: #fff; }
+.feed { max-height: 200px; overflow-y: auto; }
+.feed .msg { border-bottom: 1px dashed var(--border); padding: 4px 0; }
+.feed .msg .who { color: var(--accent); font-weight: 600; }
+.feed .msg.crit { color: var(--ok); }
+.feed .msg.fumble { color: var(--bad); }
+.tag { border-radius: 4px; padding: 0 5px; font-size: 11px; margin-left: 4px; }
+.tag.crit { background: var(--ok); color: #fff; }
+.tag.fumble { background: var(--bad); color: #fff; }
+.muted { color: var(--muted); font-size: 12px; }
+.src { font-size: 10.5px; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+.hpbar { height: 10px; border-radius: 6px; background: var(--chip); overflow: hidden; }
+.hpbar > div { height: 100%; background: var(--ok); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { border: 1px solid var(--border); padding: 3px 5px; text-align: left; }
+th { background: var(--chip); }
+.result-box { background: var(--chip); border-radius: 8px; padding: 8px; margin-top: 6px; white-space: pre-wrap; }
+.kbd { font-family: monospace; background: var(--chip); padding: 0 4px; border-radius: 4px; }
+.hidden { display: none; }
+  </style>
 </head>
 <body>
-  <div id="app">加载中…（若长时间无响应，请确认已在枭熊房间内打开）</div>
-  <script src="assets/xlsx.full.min.js"></script>
-  <script src="app.js"></script>
+  <div id="app">加载中…（若长时间无响应，请刷新房间页面重试）</div>
+  <script>
+  // 自举加载器：全部功能逻辑来自 app.js；github.io 加载失败时自动切 jsDelivr 镜像。
+  // SheetJS（xlsx 解析库）不在此处加载——仅在上传 xlsx 导入角色时按需懒加载（见 window.__ensureXLSX）。
+  (function () {
+    var MIRROR = "https://cdn.jsdelivr.net/gh/Apocrypha5662/owlbear-cyberpunk-red@main/";
+    function loadScript(src, onload, onerror) {
+      var s = document.createElement("script");
+      s.src = src; s.onload = onload; s.onerror = onerror;
+      document.head.appendChild(s);
+    }
+    loadScript("app.js", null, function () {
+      loadScript(MIRROR + "app.js", null, function () {
+        document.getElementById("app").textContent =
+          "脚本加载失败（github.io 与镜像均不可达）。请刷新房间页面（F5）后重试；若持续失败，检查网络代理设置。";
+      });
+    });
+    window.__MIRROR_BASE = MIRROR;
+    // 按需加载 SheetJS（主源 → 镜像兜底），返回 Promise
+    window.__ensureXLSX = function () {
+      if (window.XLSX) return Promise.resolve();
+      if (window.__xlsxLoading) return window.__xlsxLoading;
+      window.__xlsxLoading = new Promise(function (resolve, reject) {
+        var s = document.createElement("script");
+        s.src = "assets/xlsx.full.min.js";
+        s.onload = function () { resolve(); };
+        s.onerror = function () {
+          var s2 = document.createElement("script");
+          s2.src = (window.__MIRROR_BASE || "") + "assets/xlsx.full.min.js";
+          s2.onload = function () { resolve(); };
+          s2.onerror = function () { reject(new Error("xlsx 解析库加载失败")); };
+          document.head.appendChild(s2);
+        };
+        document.head.appendChild(s);
+      });
+      return window.__xlsxLoading;
+    };
+  })();
+  </script>
 </body>
 </html>

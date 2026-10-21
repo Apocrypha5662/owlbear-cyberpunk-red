@@ -4485,6 +4485,16 @@ ${esc(row.effect)}
       if (!f2) return;
       const rd = new FileReader();
       rd.onload = async () => {
+        try {
+          if (window.__ensureXLSX) await window.__ensureXLSX();
+          if (!window.XLSX) {
+            alert("xlsx \u89E3\u6790\u5E93\u52A0\u8F7D\u5931\u8D25\uFF08github.io \u4E0E\u955C\u50CF\u5747\u4E0D\u53EF\u8FBE\uFF09\uFF0C\u8BF7\u68C0\u67E5\u7F51\u7EDC\u540E\u91CD\u8BD5");
+            return;
+          }
+        } catch (err) {
+          alert("xlsx \u89E3\u6790\u5E93\u52A0\u8F7D\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u7F51\u7EDC\u540E\u91CD\u8BD5");
+          return;
+        }
         const { errors, warnings, character } = parseXlsx(rd.result);
         let msg = "";
         if (errors.length) {

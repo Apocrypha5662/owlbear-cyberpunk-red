@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
   "name": "CPR先攻",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "赛博朋克RED先攻面板：1d10+REF+先攻调整，排序/下一轮/移除，数据存场景 metadata 全房间同步。",
   "icon": "icon-init.svg",
   "author": "owlbear-cpr",

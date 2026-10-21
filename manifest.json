@@ -1,8 +1,8 @@
 {
   "manifest_version": 1,
   "name": "CPR骰盘",
-  "version": "1.1.0",
-  "description": "赛博朋克RED骰盘：快速检定、自定义掷骰，自然10重击/自然1失误，掷骰广播全房间可见。与CPR战斗/先攻/金钱/导入/速查等分体扩展数据互通。",
+  "version": "1.2.0",
+  "description": "赛博朋克RED骰盘：快速检定、自定义掷骰，自然10重击/自然1失误，掷骰广播全房间可见。",
   "icon": "icon-dice.svg",
   "author": "owlbear-cpr",
   "action": {
