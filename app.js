@@ -3977,7 +3977,7 @@
       }
     }
     function renderTab() {
-      const fn2 = visible.find((t2 => t2[0] === active)[2];
+      const fn2 = visible.find((t2) => t2[0] === active)[2];
       body.innerHTML = "";
       fn2(body);
     }
