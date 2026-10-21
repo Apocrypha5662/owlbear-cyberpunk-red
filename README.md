@@ -3,18 +3,30 @@
 Owlbear Rodeo（枭熊）的赛博朋克RED（CPR）规则扩展插件 + 鲨鱼包写卡引导网页。
 规则口径：**CPR本体 + 鲨鱼包（RED体验改良整合包）**，鲨鱼包数值优先，全部数据驱动（规则数据包 + registerRuleset），后续可加新数据包扩展。
 
-- 插件 manifest：`https://apocrypha5662.github.io/owlbear-cyberpunk-red/manifest.json`
 - 写卡向导：`https://apocrypha5662.github.io/owlbear-cyberpunk-red/creator/`
 
-## 一、插件安装（枭熊房间内）
+## 一、插件安装（枭熊房间内）— 多按钮分体版（v1.1.0）
 
-1. 打开枭熊个人主页 → **Add Extension**（或扩展管理右上角「+」Add custom extension），粘贴 manifest URL：
-   ```
-   https://apocrypha5662.github.io/owlbear-cyberpunk-red/manifest.json
-   ```
-2. 在房间内启用：左下 **"…" 菜单 → Extensions**（或在 Profile 的房间设置里勾选）；
-3. 启用后左上工具栏出现 **「CPR工具箱」** 按钮（黄底红盾图标）→ 打开面板（骰盘/战斗/先攻/状态/金钱/导入/速查/设置 八个标签页）；
-4. 画布中**右键令牌** → 「CPR状态」（HP/伤势/防具SP/死亡豁免/重创登记）、「CPR先攻」（掷先攻并进面板）。
+自 v1.1.0 起，功能拆分为 **6 个独立扩展按钮**（参考常见枭熊套件的分按钮布局），每个按钮打开聚焦面板；角色数据/设置/金钱存同一来源（localStorage + 房间 metadata），任意按钮间互通。**按需安装，不必全装**：
+
+| 按钮 | Manifest URL | 功能 |
+|------|--------------|------|
+| 🎲 CPR骰盘 | `https://apocrypha5662.github.io/owlbear-cyberpunk-red/manifest.json` | 快速检定/自定义掷骰（含右键菜单注册） |
+| ⚔️ CPR战斗 | `https://apocrypha5662.github.io/owlbear-cyberpunk-red/manifest-combat.json` | 射程DV/点射扫射/部位/削甲/重伤/死亡豁免 + 令牌HP伤势 |
+| ⏱ CPR先攻 | `https://apocrypha5662.github.io/owlbear-cyberpunk-red/manifest-init.json` | 先攻面板（1d10+REF，排序/下一轮） |
+| ¥ CPR金钱 | `https://apocrypha5662.github.io/owlbear-cyberpunk-red/manifest-money.json` | 私密金钱/黑入查账 |
+| ⬇ CPR导入 | `https://apocrypha5662.github.io/owlbear-cyberpunk-red/manifest-import.json` | JSON/xlsx 角色导入 + 规则包开关 |
+| 📖 CPR速查 | `https://apocrypha5662.github.io/owlbear-cyberpunk-red/manifest-quickref.json` | 鲨包射表/甲弹对抗/重伤表/三色反应/ACPA |
+
+安装步骤（每个按钮一次）：
+
+1. 打开枭熊个人主页 → **Add Extension**（或扩展管理「+」Add custom extension）；
+2. 粘贴上表中的 manifest URL → 出现卡片后点 **Add**；
+3. 进房间，左下 **"…" 菜单 → Extensions** 勾选启用；
+4. 启用后左上工具栏出现对应图标按钮；
+5. 画布中**右键令牌** → 「CPR状态」/「CPR先攻」（右键菜单由「CPR骰盘」扩展注册，装了骰盘即可用）。
+
+> 旧版单按钮「赛博朋克RED工具箱」已由 `manifest.json`（现为 CPR骰盘）替代；若此前装过旧版，建议在 Profile 中删除旧扩展后重新添加，以免两个同名入口混淆。
 
 ## 二、功能总览（PLAN 第五节 1~14 对应）
 
@@ -94,7 +106,8 @@ Owlbear Rodeo（枭熊）的赛博朋克RED（CPR）规则扩展插件 + 鲨鱼�
 |------|------|------|------|
 | 2026-10-21 | （首版发布） | — | v1.0.0 |
 | 2026-10-22 | 工具栏按钮图标不可见（按钮在但像空白） | icon.svg 无显式 width/height 且深色底贴深色工具栏 | v1.0.1：换高对比亮色图标 icon2.svg（显式尺寸+黄底红盾），版本号升级强制刷新缓存 |
-| 2026-10-22 | 弹出面板报「apocrypha5662.github.io/popover.html 关闭了连接」 | 国内网络访问 github.io 偶发连接重置（SNI 阻断/代理抖动），iframe 加载失败 | 属网络瞬断：刷新房间页面（F5）后重试即可；若频繁失败见下方「国内网络加速」 |
+| 2026-10-22 | 弹出面板报「apocrypha5662.github.io/popover.html 关闭了连接」 | 国内网络访问 github.io 偶发连接重置（SNI 阻断/代理抖动），iframe 加载失败；直接开新标签页访问同 URL 可复现时好时坏 | 属网络瞬断：刷新房间页面（F5）后重试即可；若频繁失败见下方「国内网络加速」 |
+| 2026-10-22 | 单按钮集成全部功能、图标不醒目 | 初版按单扩展设计 | v1.1.0：拆分为6个独立按钮扩展（骰盘/战斗/先攻/金钱/导入/速查），各配高对比专属图标，popover 支持 ?tab=&only= 聚焦参数 |
 
 ### 国内网络加速（github.io 不稳定时）
 
@@ -113,6 +126,7 @@ Owlbear Rodeo（枭熊）的赛博朋克RED（CPR）规则扩展插件 + 鲨鱼�
 - [ ] 明暗主题切换后界面可读性
 - [ ] GM 上报余额视图
 - [ ] 全自动多弹伤害与削甲数值是否符合团内习惯（见待确认2）
+- [ ] 6 个分体按钮各自打开对应聚焦面板，且角色/金钱数据互通
 
 ## 九、本地开发
 
