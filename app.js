@@ -4263,14 +4263,17 @@ ${esc(row.effect)}
     if (targetId) {
       const td = await getTokenData(targetId);
       if (td) {
-        const apply = window.confirm(`\u5C06 ${anyDmg} \u70B9\u4F24\u5BB3\u4E0E\u524A\u7532\u5E94\u7528\u5230\u300C${td.name}\u300D\uFF1F\uFF08\u786E\u5B9A=\u5E94\u7528\uFF09`);
-        if (apply) {
+        out.push(`
+\u{1F447} \u786E\u8BA4\u540E\u5E94\u7528\u5230\u300C${td.name || "\u4EE4\u724C"}\u300D\uFF08HP ${td.hpNow ?? "?"}/${td.hpMax ?? "?"}\uFF09`);
+        root.querySelector("#combatResult").innerHTML = `<div class="result-box">${out.join("\n")}</div><div class="row"><button id="applyDmg" class="primary">\u5E94\u7528 ${anyDmg} \u70B9\u4F24\u5BB3\u4E0E\u524A\u7532\u5230\u300C${esc(td.name || "\u4EE4\u724C")}\u300D</button></div>`;
+        root.querySelector("#applyDmg").onclick = async () => {
           const hpNow = Math.max(0, (td.hpNow ?? 0) - anyDmg);
           const armor = { ...td.armor || {} };
           const a2 = { ...armor[locKey] || {} };
           if (anyDmg > 0) a2.sp = (a2.sp ?? 0) - ablate;
           armor[locKey] = a2;
           const patch = { hpNow, armor, wound: hpNow <= 0 ? "\u81F4\u547D\u4F24" : hpNow < (td.hpMax || 1) / 2 ? "\u91CD\u4F24" : "\u8F7B\u4F24" };
+          let injMsg = "";
           if (hpNow <= 0 && !(td.injuries || []).some((i2) => i2.hpZero)) {
             const table = locKey === "head" ? rs.seriousInjuries?.head || [] : rs.seriousInjuries?.torso || [];
             const roll = rollExpr("1d10").total;
@@ -4280,13 +4283,17 @@ ${esc(row.effect)}
             });
             if (inj) {
               patch.injuries = [...td.injuries || [], { name: inj.name, effect: inj.effect, hpZero: true }];
-              out.push(`
-\u{1F480} HP\u5F52\u96F6 \u2192 \u91CD\u521B\u8868 d10=${roll}\uFF1A${inj.name}\uFF08${inj.effect}\uFF09`);
+              injMsg = `
+\u{1F480} HP\u5F52\u96F6 \u2192 \u91CD\u521B\u8868 d10=${roll}\uFF1A${inj.name}\uFF08${inj.effect}\uFF09`;
             }
           }
           await updateTokenData(targetId, patch);
           await broadcast({ t: "status", who: td.name, text: `\u53D7\u51FB\uFF1A-${anyDmg} HP\uFF08${hpNow}/${td.hpMax ?? "?"}\uFF09` });
-        }
+          root.querySelector("#combatResult").innerHTML = `<div class="result-box">${out.join("\n")}${injMsg}
+
+\u2714 \u5DF2\u5E94\u7528\uFF1AHP ${hpNow}/${td.hpMax ?? "?"}\uFF5C${locName} SP ${a2.sp}${a2.sp < 0 ? "\uFF08\u62A4\u7532\u635F\u574F\uFF09" : ""}\uFF5C\u4F24\u52BF ${patch.wound}</div>`;
+        };
+        return;
       }
     } else {
       out.push("\n\uFF08\u672A\u9009\u4E2D\u4EE4\u724C\uFF1A\u5982\u9700\u81EA\u52A8\u6263\u8840/\u524A\u7532\uFF0C\u8BF7\u5148\u5728\u753B\u5E03\u9009\u4E2D\u76EE\u6807\u4EE4\u724C\u5E76\u70B9\u300C\u8BFB\u53D6\u9009\u4E2D\u4EE4\u724C\u300D\uFF09");

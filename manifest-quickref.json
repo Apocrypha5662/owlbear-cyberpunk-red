@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
   "name": "CPR速查",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "鲨鱼包速查：新射表/全自动射表/甲弹对抗/重伤表/三色反应/ACPA，战斗中随手查阅。",
   "icon": "icon-quick.svg",
   "author": "owlbear-cpr",

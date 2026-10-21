@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
   "name": "CPR金钱",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "赛博朋克RED私密金钱：余额流水只存本机 localStorage，黑入查账仅发起方可见余额，可向GM主动上报。",
   "icon": "icon-money.svg",
   "author": "owlbear-cpr",
