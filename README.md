@@ -8,12 +8,12 @@ Owlbear Rodeo（枭熊）的赛博朋克RED（CPR）规则扩展插件 + 鲨鱼�
 
 ## 一、插件安装（枭熊房间内）
 
-1. 打开任意枭熊房间 → 左下工具栏点 **扩展（Extensions）图标**（扳手/拼图图标）；
-2. 点 **Add Extension**，粘贴 manifest URL：
+1. 打开枭熊个人主页 → **Add Extension**（或扩展管理右上角「+」Add custom extension），粘贴 manifest URL：
    ```
    https://apocrypha5662.github.io/owlbear-cyberpunk-red/manifest.json
    ```
-3. 安装后工具栏出现 **「CPR工具箱」** 按钮 → 打开面板（骰盘/战斗/先攻/状态/金钱/导入/速查/设置 八个标签页）；
+2. 在房间内启用：左下 **"…" 菜单 → Extensions**（或在 Profile 的房间设置里勾选）；
+3. 启用后左上工具栏出现 **「CPR工具箱」** 按钮（黄底红盾图标）→ 打开面板（骰盘/战斗/先攻/状态/金钱/导入/速查/设置 八个标签页）；
 4. 画布中**右键令牌** → 「CPR状态」（HP/伤势/防具SP/死亡豁免/重创登记）、「CPR先攻」（掷先攻并进面板）。
 
 ## 二、功能总览（PLAN 第五节 1~14 对应）
@@ -93,6 +93,16 @@ Owlbear Rodeo（枭熊）的赛博朋克RED（CPR）规则扩展插件 + 鲨鱼�
 | 日期 | 问题 | 原因 | 修复 |
 |------|------|------|------|
 | 2026-10-21 | （首版发布） | — | v1.0.0 |
+| 2026-10-22 | 工具栏按钮图标不可见（按钮在但像空白） | icon.svg 无显式 width/height 且深色底贴深色工具栏 | v1.0.1：换高对比亮色图标 icon2.svg（显式尺寸+黄底红盾），版本号升级强制刷新缓存 |
+| 2026-10-22 | 弹出面板报「apocrypha5662.github.io/popover.html 关闭了连接」 | 国内网络访问 github.io 偶发连接重置（SNI 阻断/代理抖动），iframe 加载失败 | 属网络瞬断：刷新房间页面（F5）后重试即可；若频繁失败见下方「国内网络加速」 |
+
+### 国内网络加速（github.io 不稳定时）
+
+- 刷新房间页面（F5）后再点插件按钮，多数情况可恢复。
+- 仍失败时可改用 jsDelivr 镜像 manifest 安装（内容与 GitHub 同步）：
+  `https://cdn.jsdelivr.net/gh/Apocrypha5662/owlbear-cyberpunk-red@main/manifest.json`
+  （在枭熊 Profile 里删掉旧扩展再添加此链接；jsDelivr 有约 12 小时缓存，更新后有延迟。）
+- 写卡向导页同样可走镜像：`https://cdn.jsdelivr.net/gh/Apocrypha5662/owlbear-cyberpunk-red@main/creator/`
 
 ## 八、人工复测清单（自动化无法验证，需真人在房间内点验）
 
