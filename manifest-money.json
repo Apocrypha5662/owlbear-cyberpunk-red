@@ -1,0 +1,19 @@
+{
+  "manifest_version": 1,
+  "name": "CPR金钱",
+  "version": "1.1.0",
+  "description": "赛博朋克RED私密金钱：余额流水只存本机 localStorage，绝不进房间共享数据；黑入查账余额仅发起方可见，可向GM主动上报。",
+  "icon": "icon-money.svg",
+  "author": "owlbear-cpr",
+  "action": {
+    "title": "CPR金钱",
+    "icon": "icon-money.svg",
+    "popover": "popover.html?tab=money&only=money",
+    "width": 380,
+    "height": 640
+  },
+  "background_url": "background-empty.js",
+  "permissions": [
+    { "name": "clipboard-write", "reason": "导出资金流水时写入剪贴板" }
+  ]
+}
