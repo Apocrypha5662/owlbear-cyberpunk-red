@@ -3952,12 +3952,19 @@
       ["quick", "\u901F\u67E5", renderQuick],
       ["settings", "\u8BBE\u7F6E", renderSettings]
     ];
-    let active = "dice";
+    const tabParam = params.get("tab");
+    const onlyList = (params.get("only") || "").split(",").filter(Boolean);
+    const visible = onlyList.length ? tabs.filter((t2) => onlyList.includes(t2[0])) : tabs;
+    let active = visible.some((t2) => t2[0] === tabParam) ? tabParam : visible[0][0];
     const tabsEl = root.querySelector("#tabs");
     const body = root.querySelector("#tabBody");
     function renderTabs() {
       tabsEl.innerHTML = "";
-      for (const [id, label] of tabs) {
+      for (const [id, label] of visible) {
+        if (visible.length <= 1) {
+          tabsEl.style.display = "none";
+          break;
+        }
         const b2 = document.createElement("button");
         b2.textContent = label;
         b2.className = id === active ? "active" : "";
@@ -3970,7 +3977,7 @@
       }
     }
     function renderTab() {
-      const fn2 = tabs.find((t2) => t2[0] === active)[2];
+      const fn2 = visible.find((t2 => t2[0] === active)[2];
       body.innerHTML = "";
       fn2(body);
     }
