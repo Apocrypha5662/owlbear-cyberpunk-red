@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>赛博朋克RED 写卡向导（鲨鱼包全自动卡 V1.91）</title>
+<script src="vendor/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f5f6fa;--panel:#fff;--text:#1c1e26;--muted:#6b7280;--accent:#e2231a;--border:#d9dbe3;--chip:#eef0f5;--ok:#16a34a;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.6 system-ui,"Microsoft YaHei",sans-serif;padding:16px;max-width:1080px;margin:0 auto}
+h1{font-size:20px;margin:0 0 4px} h3{margin:10px 0 4px}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.steps button{border:1px solid var(--border);background:var(--panel);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px}
+.steps button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:2px}
+input,select,textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:13px;background:#fff}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+button.primary{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:14px}
+button.small{padding:3px 9px;font-size:12px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{border:1px solid var(--border);padding:4px 6px;text-align:left}
+th{background:var(--chip)}
+.skill-table td input{width:70px}
+.muted{color:var(--muted);font-size:12px}
+.points{font-size:16px}.points b{color:var(--accent)}
+.warn{color:#d97706}.ok{color:var(--ok)}
+.hr{border-top:1px dashed var(--border);margin:10px 0}
+</style>
+</head>
+<body>
+<h1>赛博朋克RED · 写卡向导</h1>
+<div class="muted">按鲨鱼包口径（RED体验改良整合包 V1.92 / 全自动卡 V1.91）引导填卡，完成后可下载 ① 填好的《鲨鱼包全自动卡》xlsx　② 角色数据 JSON（供枭熊 CPR 工具箱插件一键导入）。机翻规则原文已润色。</div>
+
+<div class="steps" id="steps"></div>
+<div id="body"></div>
+
+<div class="panel">
+  <div class="row">
+    <button class="primary" id="dlXlsx">⬇ 下载填好的全自动卡 xlsx</button>
+    <button class="primary" id="dlJson">⬇ 下载角色数据 JSON</button>
+    <span id="status" class="muted"></span>
+  </div>
+  <div class="muted">xlsx 由浏览器内 SheetJS 直接写入模板单元格后下载；打开后请用电脑版 WPS/Excel 让公式重算（属性合计/HP/人性等会自动更新）。</div>
+</div>
+
+<script>
+// ---------------- 数据 ----------------
+const ATTRS = [["INT","智力"],["REF","反应"],["DEX","敏捷"],["TECH","技术"],["COOL","酷"],["WILL","意志"],["LUCK","运气"],["MOV","移速"],["BODY","体格"],["EMP","共情"]];
+const CAREERS = ["摇滚小子","佣兵","网行者","技工","技医","媒体人","企业人","执法者","掮客","游民"];
+const SKILLS = [
+  // [行号, 列名, 加点列, 调整列, 类别, 是否[x2]]
+  [5,"专注","W","V","感官",0],[6,"隐藏/发现物品","W","V","感官",0],[7,"唇语","W","V","感官",0],[8,"察觉","W","V","感官",0],[9,"追踪","W","V","感官",0],
+  [11,"运动","W","V","身体",0],[12,"柔韧","W","V","身体",0],[13,"舞蹈","W","V","身体",0],[15,"忍耐","W","V","身体",0],[16,"潜行","W","V","身体",0],
+  [18,"陆地载具","W","V","操作",0],[19,"空中载具","W","V","操作",1],[20,"水上载具","W","V","操作",0],[21,"骑术","W","V","操作",0],
+  [23,"扮演/伪装","W","V","表演",0],[24,"乐器演奏","W","V","表演",0],
+  [5,"会计","AC","AB","教育/知识",0],[6,"驯兽","AC","AB","教育/知识",0],[7,"官场","AC","AB","教育/知识",0],[8,"商务","AC","AB","教育/知识",0],[9,"写作","AC","AB","教育/知识",0],
+  [10,"犯罪学","AC","AB","教育/知识",0],[11,"密码学","AC","AB","教育/知识",0],[12,"推理","AC","AB","教育/知识",0],[13,"通识","AC","AB","教育/知识",0],[14,"赌博","AC","AB","教育/知识",0],
+  [15,"图书馆检索","AC","AB","教育/知识",0],[16,"科学","AC","AB","教育/知识",0],[20,"战术","AC","AB","教育/知识",0],[21,"野外生存","AC","AB","教育/知识",0],
+  [22,"口语表达","AC","AB","教育/知识",0],[23,"街头俚语","AC","AB","教育/知识",0],[24,"母语","AC","AB","教育/知识",0],[25,"外语","AC","AB","教育/知识",0],[26,"本地专家","AC","AB","教育/知识",0],
+  [3,"搏击","AI","AH","战斗",0],[4,"闪避","AI","AH","战斗",0],[8,"近战武器","AI","AH","战斗",0],[10,"弓术","AI","AH","战斗",0],
+  [11,"自动武器","AI","AH","战斗",1],[12,"手枪","AI","AH","战斗",0],[13,"重武器","AI","AH","战斗",1],[14,"长管武器","AI","AH","战斗",0],
+  [16,"贿赂","AI","AH","社交",0],[17,"交谈","AI","AH","社交",0],[18,"察言观色","AI","AH","社交",0],[19,"审讯","AI","AH","社交",0],[20,"说服","AI","AH","社交",0],
+  [21,"个人装扮","AI","AH","社交",0],[22,"街头智慧","AI","AH","社交",0],[23,"交易","AI","AH","社交",0],[24,"服饰与风格","AI","AH","社交",0],
+  [26,"空中载具技术","AI","AH","技术",0],[27,"基础技术","AI","AH","技术",0],[28,"赛博技术","AI","AH","技术",0],[29,"爆破学","AI","AH","技术",1],
+  [30,"电子/安全技术","AI","AH","技术",1],[31,"急救","AI","AH","技术",0],[32,"强化急救","AI","AH","技术",1],[33,"伪造","AI","AH","技术",0],
+  [34,"地面载具技术","AI","AH","技术",0],[37,"开锁","AI","AH","技术",0],[38,"扒窃","AI","AH","技术",0],[39,"海洋载具技术","AI","AH","技术",0],[40,"武器技术","AI","AH","技术",0]
+];
+const WEAPON_PRESETS = [
+  {name:"中型手枪",type:"中型手枪",rof:2,mag:"12（中型手枪弹）",damage:"2D6",ammo:"手枪",reliability:"高"},
+  {name:"重型手枪",type:"重型手枪",rof:2,mag:"8（重型手枪弹）",damage:"3D6",ammo:"重手枪",reliability:"高"},
+  {name:"超重型手枪",type:"超重型手枪",rof:1,mag:"8（超重型手枪弹）",damage:"4D6",ammo:"重手枪",reliability:"高"},
+  {name:"冲锋枪",type:"冲锋枪",rof:1,mag:"30（中型手枪弹）",damage:"2D6",ammo:"手枪",reliability:"中",auto:"3x8"},
+  {name:"重型冲锋枪",type:"重型冲锋枪",rof:1,mag:"40（重型手枪弹）",damage:"3D6",ammo:"重手枪",reliability:"中",auto:"3x8"},
+  {name:"霰弹枪",type:"霰弹枪",rof:1,mag:"4（独头弹）",damage:"5D6",ammo:"重手枪",reliability:"中"},
+  {name:"突击步枪",type:"突击步枪",rof:1,mag:"25（步枪弹）",damage:"5D6",ammo:"中威力",reliability:"高",auto:"4x8"},
+  {name:"狙击步枪",type:"狙击步枪",rof:1,mag:"4（步枪弹）",damage:"5D6",ammo:"中威力",reliability:"高"},
+  {name:"弓",type:"弓",rof:1,mag:"/（箭）",damage:"4D6",ammo:"重手枪",reliability:"高"},
+  {name:"轻型近战武器",type:"轻型近战",rof:2,mag:"/",damage:"1D6",ammo:"全威力",reliability:"高"},
+  {name:"中型近战武器",type:"中型近战",rof:2,mag:"/",damage:"2D6",ammo:"全威力",reliability:"高"},
+  {name:"重型近战武器",type:"重型近战",rof:2,mag:"/",damage:"3D6",ammo:"全威力",reliability:"高"}
+];
+const ARMOR_PRESETS = [
+  {name:"皮衣",sp:4,ev:0,legal:"Y"},{name:"凯夫拉材料",sp:7,ev:0,legal:"Y"},{name:"轻型装甲夹克",sp:11,ev:0,legal:"Y"},
+  {name:"中型装甲夹克",sp:12,ev:2,legal:"Y"},{name:"重型装甲夹克",sp:13,ev:2,legal:"Y"},{name:"防弹背心",sp:15,ev:4,legal:"Y"},{name:"合金装备",sp:18,ev:4,legal:"N"}
+];
+const ARMOR_SLOTS = ["头部","面部","躯干","插板","胳膊","腿部","盾牌","赛博格"];
+const CYBERWARE = [
+  {name:"神经链路",h:7,cap:0,cost:500,note:"神经组件前提，5插槽"},
+  {name:"交互接口",h:7,cap:0,cost:500,note:"连接智能枪械/设备"},
+  {name:"芯片插槽",h:7,cap:0,cost:500,note:"后颈单芯片槽"},
+  {name:"克伦齐科夫",h:14,cap:0,cost:500,note:"时间加速，+3先攻(1分钟)"},
+  {name:"斯安威斯坦",h:7,cap:0,cost:500,note:"时间加速，+3先攻(1分钟)"},
+  {name:"痛觉编辑器",h:14,cap:0,cost:1000,note:"加速组件"},
+  {name:"赛博义眼",h:7,cap:0,cost:100,note:"每颗3插槽"},
+  {name:"赛博音频套装",h:7,cap:0,cost:500,note:"3个音频插槽"},
+  {name:"编织皮肤",h:7,cap:0,cost:500,note:"身体+头部SP7"},
+  {name:"皮下护甲",h:14,cap:0,cost:1000,note:"身体+头部SP11"},
+  {name:"赛博臂",h:7,cap:0,cost:500,note:"每臂4插槽"},
+  {name:"赛博腿",h:7,cap:0,cost:500,note:"每腿3插槽"},
+  {name:"骨肉织绕",h:14,cap:0,cost:1000,note:"体格+2"},
+  {name:"皮下握把",h:3,cap:0,cost:100,note:"智能枪械接口替代"},
+  {name:"生物监测器",h:0,cap:0,cost:100,note:"时尚装置"}
+];
+
+// ---------------- 状态 ----------------
+const S = {
+  step: 0,
+  info: {player:"",name:"",nickname:"",age:"",gender:"",homeland:"",level:1,reputation:0,family:"",note:""},
+  attrTotal: 62, attrs: {INT:5,REF:6,DEX:6,TECH:4,COOL:5,WILL:5,LUCK:4,MOV:6,BODY:5,EMP:6},
+  career: {primary:"佣兵",primaryLv:4,secondary:[]},
+  skillTotal: 86, skills: {},
+  cyber: [], weapons: [], armor: [],
+  money: {starting:2000, sponsor:0}
+};
+
+// ---------------- 向导 UI ----------------
+const STEPS = ["① 基本信息","② 属性","③ 职业","④ 技能","⑤ 义体","⑥ 装备","⑦ 资金/导出"];
+function el(h){const d=document.createElement("div");d.innerHTML=h;return d;}
+function renderSteps(){
+  const s=document.getElementById("steps");s.innerHTML="";
+  STEPS.forEach((t,i)=>{const b=document.createElement("button");b.textContent=t;if(i===S.step)b.className="active";
+    b.onclick=()=>{S.step=i;render();};s.appendChild(b);});
+}
+function render(){
+  renderSteps();
+  const b=document.getElementById("body");b.innerHTML="";
+  [renderInfo,renderAttrs,renderCareer,renderSkills,renderCyber,renderGear,renderMoney][S.step](b);
+}
+
+function renderInfo(root){
+  root.appendChild(el(`<div class="panel"><h3>① 基本信息</h3>
+  <div class="grid">
+    ${Object.entries({player:"玩家",name:"姓名*",nickname:"外号",age:"年龄",gender:"性别",homeland:"故乡",family:"原生家庭"}).map(([k,v])=>`<div><label>${v}</label><input id="i_${k}" value="${S.info[k]||""}"/></div>`).join("")}
+    <div><label>等级</label><input id="i_level" type="number" value="${S.info.level||1}"/></div>
+    <div><label>声望</label><input id="i_reputation" type="number" value="${S.info.reputation||0}"/></div>
+  </div>
+  <div><label>备注（特殊设定 / RF 补充）</label><textarea id="i_note" rows="2">${S.info.note||""}</textarea></div>
+  </div>`));
+  root.querySelectorAll("input,textarea").forEach(inp=>inp.oninput=()=>{const k=inp.id.slice(2);S.info[k]=inp.type==="number"?parseFloat(inp.value)||0:inp.value;});
+}
+
+function renderAttrs(root){
+  const used=()=>ATTRS.reduce((s,[k])=>s+(S.attrs[k]||0),0);
+  const left=()=>S.attrTotal-used();
+  root.appendChild(el(`<div class="panel"><h3>② 属性分配</h3>
+    <div class="row"><label>属性总点数（本体口径 62，以 RF 为准）</label><input id="attrTotal" type="number" value="${S.attrTotal}" style="width:80px"/></div>
+    <div class="row">属性范围建议 2~8；共情每点 = 10 点人性；生命值 = 10 + ⌈(体格+意志)/2⌉ × 5</div>
+    <div class="grid">${ATTRS.map(([k,v])=>`<div><label>${v} ${k}</label><input type="number" min="1" max="10" data-attr="${k}" value="${S.attrs[k]}"/></div>`).join("")}</div>
+    <div class="row points">已用 <b id="used">${used()}</b> / 剩余 <b id="left">${left()}</b></div>
+    <div class="row"><button class="small" id="rand">🎲 9d10 随机掷属性（本体快速法）</button>
+    <span class="muted">HP 预览：<b id="hpPrev"></b>　人性上限预览（不含义体）：<b id="humPrev"></b></span></div>
+  </div>`));
+  const upd=()=>{
+    root.querySelector("#used").textContent=used();
+    root.querySelector("#left").textContent=left();
+    root.querySelector("#left").className=left()===0?"ok":"warn";
+    const body=S.attrs.BODY||0, will=S.attrs.WILL||0;
+    root.querySelector("#hpPrev").textContent=`${10+Math.ceil((body+will)/2)*5}`;
+    root.querySelector("#humPrev").textContent=`${(S.attrs.EMP||0)*10}`;
+  };
+  root.querySelectorAll("[data-attr]").forEach(inp=>inp.oninput=()=>{S.attrs[inp.dataset.attr]=parseInt(inp.value)||0;upd();});
+  root.querySelector("#attrTotal").oninput=e=>{S.attrTotal=parseInt(e.target.value)||0;upd();};
+  root.querySelector("#rand").onclick=()=>{
+    const rolls=Array.from({length:9},()=>1+Math.floor(Math.random()*10)).sort((a,b)=>b-a);
+    let i=0; ATTRS.forEach(([k])=>{ if(k==="EMP")return; S.attrs[k]=rolls[i]||2; i++; });
+    // 共情：余下最低骰（本体快速法按剩余最低值）
+    S.attrs.EMP=rolls[8]||2;
+    render(); upd();
+  };
+  upd();
+}
+
+function renderCareer(root){
+  root.appendChild(el(`<div class="panel"><h3>③ 职业</h3>
+    <div class="row"><label>主职业</label><select id="c_p">${CAREERS.map(c=>`<option ${S.career.primary===c?"selected":""}>${c}</option>`).join("")}</select>
+    <label>等级</label><input id="c_plv" type="number" min="1" value="${S.career.primaryLv}" style="width:70px"/></div>
+    <div class="muted">主职业等级 ≥4 才可兼职（鲨包/RF 口径）。兼职：填名称与等级。</div>
+    <div id="sec"></div>
+    <div class="row"><button class="small" id="addSec">＋ 添加兼职</button></div>
+    <div class="hr"></div>
+    <div class="muted">职业能力请在 xlsx 的【人物卡】「职业能力」栏登记（掮客人脉/业障、游民家族声望、执法者/企业人/媒体人分支等）。</div>
+  </div>`));
+  function drawSec(){
+    const c=root.querySelector("#sec");c.innerHTML="";
+    S.career.secondary.forEach((s,i)=>{
+      c.appendChild(el(`<div class="row"><input placeholder="兼职名称" value="${s.name||""}" data-i="${i}" data-k="name" style="width:180px"/>
+        <input placeholder="等级" type="number" value="${s.level||1}" data-i="${i}" data-k="level" style="width:70px"/>
+        <button class="small" data-del="${i}">✕</button></div>`));
+    });
+    c.querySelectorAll("[data-k]").forEach(inp=>inp.oninput=()=>{S.career.secondary[inp.dataset.i][inp.dataset.k]=inp.dataset.k==="level"?parseInt(inp.value)||1:inp.value;});
+    c.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{S.career.secondary.splice(parseInt(b.dataset.del),1);drawSec();});
+  }
+  root.querySelector("#c_p").onchange=e=>S.career.primary=e.target.value;
+  root.querySelector("#c_plv").oninput=e=>S.career.primaryLv=parseInt(e.target.value)||1;
+  root.querySelector("#addSec").onclick=()=>{S.career.secondary.push({name:"",level:1});drawSec();};
+  drawSec();
+}
+
+function renderSkills(root){
+  const cats=[...new Set(SKILLS.map(s=>s[4]))];
+  const spent=()=>SKILLS.reduce((s,[row,name,, , ,x2])=>{
+    const v=S.skills[name]||0;return s+(x2?v*2:v);},0);
+  const left=()=>S.skillTotal-spent();
+  root.appendChild(el(`<div class="panel"><h3>④ 技能加点</h3>
+    <div class="row"><label>技能总点数（边缘行者法 86，以 RF 为准）</label><input id="skTotal" type="number" value="${S.skillTotal}" style="width:80px"/></div>
+    <div class="row">标 (×2) 的技能：加点栏每 2 点折算 1 级（鲨包口径）。「本地专家/外语/母语」等带括号技能请下载后在 xlsx 括号处补专精。</div>
+    <div class="row points">实际消耗 <b id="used">${spent()}</b> / 剩余 <b id="left">${left()}</b></div>
+    ${cats.map(cat=>`<h3>${cat}</h3><table class="skill-table"><tr><th>技能</th><th>加点</th></tr>
+      ${SKILLS.filter(s=>s[4]===cat).map(([row,name])=>`<tr><td>${name}${SKILLS.find(s=>s[1]===name&&s[4]===cat)[5]?" (×2)":""}</td>
+      <td><input type="number" min="0" data-sk="${name}" value="${S.skills[name]||0}"/></td></tr>`).join("")}</table>`).join("")}
+  </div>`));
+  const upd=()=>{root.querySelector("#used").textContent=spent();root.querySelector("#left").textContent=left();
+    root.querySelector("#left").className=left()===0?"ok":"warn";};
+  root.querySelector("#skTotal").oninput=e=>{S.skillTotal=parseInt(e.target.value)||0;upd();};
+  root.querySelectorAll("[data-sk]").forEach(inp=>inp.oninput=()=>{S.skills[inp.dataset.sk]=parseInt(inp.value)||0;upd();});
+  upd();
+}
+
+function renderCyber(root){
+  const humLost=()=>S.cyber.reduce((s,c)=>s+(c.h||0),0);
+  const capLost=()=>S.cyber.reduce((s,c)=>s+(c.cap||0),0);
+  root.appendChild(el(`<div class="panel"><h3>⑤ 义体（安装即扣人性）</h3>
+    <div class="row"><select id="cyPick">${CYBERWARE.map(c=>`<option>${c.name}</option>`).join("")}</select>
+    <button class="small" id="cyAdd">添加</button>
+    <span class="muted">人性损失按开卡默认取期望值（1d6≈3.5、2d6≈7）；上限损失=义体件数×2（鲨包易错点：安装并非等量损失上限）。</span></div>
+    <table><tr><th>义体</th><th>人性损失</th><th>上限损失</th><th>花费</th><th>说明</th><th></th></tr><tbody id="cyRows"></tbody></table>
+    <div class="row points">总人性损失 <b>${humLost()}</b>｜总上限损失 <b>${capLost()}</b>｜人性上限 = ${S.attrs.EMP*10} - ${capLost()} = <b>${Math.max(0,S.attrs.EMP*10-capLost())}</b></div>
+  </div>`));
+  function draw(){
+    const t=root.querySelector("#cyRows");t.innerHTML="";
+    S.cyber.forEach((c,i)=>{
+      const tpl=CYBERWARE.find(x=>x.name===c.name)||{};
+      t.innerHTML+=`<tr><td>${c.name}</td><td><input type="number" data-i="${i}" data-k="h" value="${c.h}" style="width:60px"/></td>
+      <td><input type="number" data-i="${i}" data-k="cap" value="${c.cap}" style="width:60px"/></td>
+      <td>${c.cost||tpl.cost||0}</td><td class="muted">${tpl.note||""}</td><td><button class="small" data-del="${i}">✕</button></td></tr>`;
+    });
+    t.querySelectorAll("[data-k]").forEach(inp=>inp.oninput=()=>{S.cyber[inp.dataset.i][inp.dataset.k]=parseInt(inp.value)||0;});
+    t.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{S.cyber.splice(parseInt(b.dataset.del),1);render();});
+  }
+  root.querySelector("#cyAdd").onclick=()=>{
+    const name=root.querySelector("#cyPick").value;
+    const tpl=CYBERWARE.find(x=>x.name===name);
+    S.cyber.push({name,h:tpl.h,cap:S.cyber.length===0&&false?0:2,cost:tpl.cost,note:tpl.note});
+    render();
+  };
+  draw();
+}
+
+function renderGear(root){
+  root.appendChild(el(`<div class="panel"><h3>⑥ 武器（最多4把，自动同步人物卡）</h3>
+    <div class="row"><select id="wpPick">${WEAPON_PRESETS.map((w,i)=>`<option value="${i}">${w.name}（${w.damage}）</option>`).join("")}</select>
+    <button class="small" id="wpAdd">添加预设</button><span class="muted">也可手填自定义武器。</span></div>
+    <table><tr><th>名称</th><th>类型</th><th>射速</th><th>弹容(口径)</th><th>精准</th><th>持手</th><th>全自动弹幕</th><th>伤害</th><th>穿甲等级</th><th></th></tr><tbody id="wpRows"></tbody></table>
+  </div>
+  <div class="panel"><h3>护甲（作战区，SP/EV 自动同步）</h3>
+    <div class="row"><select id="arPick">${ARMOR_PRESETS.map((a,i)=>`<option value="${i}">${a.name} SP${a.sp} EV${a.ev}</option>`).join("")}</select>
+    <select id="arSlot">${ARMOR_SLOTS.map(s=>`<option>${s}</option>`).join("")}</select>
+    <button class="small" id="arAdd">添加</button>
+    <span class="muted">EV 妨碍取全身最大值，同时扣 反应/敏捷/移速（鲨包口径）。</span></div>
+    <table><tr><th>部位</th><th>名称</th><th>合法外穿</th><th>SP</th><th>EV</th><th></th></tr><tbody id="arRows"></tbody></table>
+  </div>`));
+  function drawWp(){
+    const t=root.querySelector("#wpRows");t.innerHTML="";
+    S.weapons.slice(0,4).forEach((w,i)=>{
+      t.innerHTML+=`<tr>
+      <td><input data-i="${i}" data-k="name" value="${w.name||""}" style="width:120px"/></td>
+      <td><input data-i="${i}" data-k="type" value="${w.type||""}" style="width:90px"/></td>
+      <td><input data-i="${i}" data-k="rof" value="${w.rof??1}" style="width:40px"/></td>
+      <td><input data-i="${i}" data-k="mag" value="${w.mag||""}" style="width:110px"/></td>
+      <td><input data-i="${i}" data-k="precision" value="${w.precision??0}" style="width:40px"/></td>
+      <td><input data-i="${i}" data-k="hands" value="${w.hands||1}" style="width:40px"/></td>
+      <td><input data-i="${i}" data-k="auto" value="${w.auto||""}" style="width:60px"/></td>
+      <td><input data-i="${i}" data-k="damage" value="${w.damage||""}" style="width:70px"/></td>
+      <td><input data-i="${i}" data-k="ammo" value="${w.ammo||""}" style="width:70px"/></td>
+      <td><button class="small" data-del="${i}">✕</button></td></tr>`;
+    });
+    t.querySelectorAll("[data-k]").forEach(inp=>inp.oninput=()=>{const k=inp.dataset.k;S.weapons[inp.dataset.i][k]=["rof","precision","hands"].includes(k)?(parseInt(inp.value)||0):inp.value;});
+    t.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{S.weapons.splice(parseInt(b.dataset.del),1);render();});
+  }
+  function drawAr(){
+    const t=root.querySelector("#arRows");t.innerHTML="";
+    S.armor.forEach((a,i)=>{
+      t.innerHTML+=`<tr>
+      <td><input data-i="${i}" data-k="slot" value="${a.slot||""}" style="width:70px"/></td>
+      <td><input data-i="${i}" data-k="name" value="${a.name||""}" style="width:130px"/></td>
+      <td><input data-i="${i}" data-k="legal" value="${a.legal||"Y"}" style="width:50px"/></td>
+      <td><input data-i="${i}" data-k="sp" value="${a.sp??0}" style="width:50px"/></td>
+      <td><input data-i="${i}" data-k="ev" value="${a.ev??0}" style="width:50px"/></td>
+      <td><button class="small" data-del="${i}">✕</button></td></tr>`;
+    });
+    t.querySelectorAll("[data-k]").forEach(inp=>inp.oninput=()=>{const k=inp.dataset.k;S.armor[inp.dataset.i][k]=["sp","ev"].includes(k)?(parseInt(inp.value)||0):inp.value;});
+    t.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{S.armor.splice(parseInt(b.dataset.del),1);render();});
+  }
+  root.querySelector("#wpAdd").onclick=()=>{if(S.weapons.length>=4){alert("武器栏最多 4 把");return;}S.weapons.push({...WEAPON_PRESETS[parseInt(root.querySelector("#wpPick").value)]});render();};
+  root.querySelector("#arAdd").onclick=()=>{const p=ARMOR_PRESETS[parseInt(root.querySelector("#arPick").value)];S.armor.push({slot:root.querySelector("#arSlot").value,...p});render();};
+  drawWp();drawAr();
+}
+
+function renderMoney(root){
+  const humCap=Math.max(0,S.attrs.EMP*10-S.cyber.reduce((s,c)=>s+(c.cap||0),0));
+  root.appendChild(el(`<div class="panel"><h3>⑦ 资金与导出</h3>
+    <div class="row"><label>初始资金（短团口径，填入购物助手「初始资金」）</label><input id="m0" type="number" value="${S.money.starting}" style="width:110px"/> eb
+    <label>赞助/流动</label><input id="m1" type="number" value="${S.money.sponsor}" style="width:90px"/> eb</div>
+    <div class="muted">长团口径：初始资金填 0，收支走【往来记录】（下载后手工登记，或在枭熊插件私密账本中记账）。</div>
+    <div class="hr"></div>
+    <div class="row">HP：<b>${10+Math.ceil(((S.attrs.BODY||0)+(S.attrs.WILL||0))/2)*5}</b>　人性上限：<b>${humCap}</b>（当前默认=上限-总损失）　金钱：<b>${S.money.starting+S.money.sponsor}</b> eb</div>
+    <div class="row"><button class="primary" id="dlXlsx2">⬇ 下载全自动卡 xlsx</button><button class="primary" id="dlJson2">⬇ 下载角色 JSON</button><span id="st2" class="muted"></span></div>
+  </div>`));
+  root.querySelector("#m0").oninput=e=>S.money.starting=parseInt(e.target.value)||0;
+  root.querySelector("#m1").oninput=e=>S.money.sponsor=parseInt(e.target.value)||0;
+  root.querySelector("#dlXlsx2").onclick=downloadXlsx;
+  root.querySelector("#dlJson2").onclick=downloadJson;
+}
+
+// ---------------- 角色数据 JSON ----------------
+function charJson(){
+  return {
+    schema:"cpr-shark-v1",
+    name:S.info.name||"无名者",nickname:S.info.nickname,player:S.info.player,age:S.info.age,gender:S.info.gender,
+    homeland:S.info.homeland,family:S.info.family,note:S.info.note,level:S.info.level,reputation:S.info.reputation,
+    attrPoints:S.attrTotal,attributes:{...S.attrs},
+    careers:[{name:S.career.primary,level:S.career.primaryLv,primary:true},...S.career.secondary.map(s=>({name:s.name,level:s.level,primary:false}))],
+    skills:SKILLS.filter(([row,name])=>S.skills[name]).map(([row,name,, ,cat,x2])=>({name,category:cat,points:S.skills[name],adjust:0,halved:!!x2})),
+    weapons:S.weapons.map(w=>({name:w.name,type:w.type,rof:w.rof,mag:w.mag,precision:w.precision||0,hands:w.hands||1,autofire:w.auto||"",damage:w.damage,ammoClass:w.ammo})),
+    armor:S.armor.map(a=>({slot:a.slot,name:a.name,rarity:"",sp:a.sp||0,ev:a.ev||0})),
+    cyberware:S.cyber.map(c=>({name:c.name,humanityLoss:c.h||0,capLoss:c.cap||0})),
+    hp:{max:10+Math.ceil(((S.attrs.BODY||0)+(S.attrs.WILL||0))/2)*5,now:10+Math.ceil(((S.attrs.BODY||0)+(S.attrs.WILL||0))/2)*5},
+    humanity:{max:Math.max(0,S.attrs.EMP*10-S.cyber.reduce((s,c)=>s+(c.cap||0),0))},
+    money:{starting:S.money.starting+S.money.sponsor},
+    initiativeMod:0,deathSaveMod:0
+  };
+}
+function downloadJson(){
+  const blob=new Blob([JSON.stringify(charJson(),null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=`${S.info.name||"角色"}_角色数据.json`;a.click();
+  status("角色 JSON 已下载");
+}
+
+// ---------------- xlsx 填充（SheetJS） ----------------
+const MAP={
+  info:{C16:"player",C17:"name",C18:"nickname",C19:"age",E19:"gender",C20:"homeland",C21:"level",E21:"reputation",C22:"family",C47:"note"},
+  attrs:{K4:"INT",K6:"REF",K8:"DEX",K10:"TECH",K12:"COOL",K14:"WILL",K16:"LUCK",K18:"MOV",K20:"BODY",K22:"EMP"},
+  attrPoints:"K24"
+};
+const WROWS=[5,15,25,35];
+const SLOTS={};
+
+function fillSheet(wb){
+  // 清示例：人物卡技能加点/调整、武器卡/防具卡/义体卡示例区、购物助手资金——只动输入格
+  const set=(sn,cell,v)=>{const ws=wb.Sheets[sn];if(!ws)return;
+    if(v===""||v===undefined||v===null){if(ws[cell])delete ws[cell].v,delete ws[cell].w;return;}
+    ws[cell]={...(ws[cell]||{}),t:typeof v==="number"?"n":"s",v};};
+  // 基础信息
+  for(const [cell,k] of Object.entries(MAP.info)) set("人物卡",cell,S.info[k] ?? "");
+  // 属性
+  for(const [cell,k] of Object.entries(MAP.attrs)) set("人物卡",cell,S.attrs[k]);
+  set("人物卡",MAP.attrPoints,S.attrTotal);
+  set("人物卡","C27",S.career.primary);set("人物卡","E27",S.career.primaryLv);
+  S.career.secondary.slice(0,9).forEach((s,i)=>{const r=29+i*2;set("人物卡",`C${r}`,s.name||"");set("人物卡",`E${r}`,s.level||1);});
+  // 技能（先按列清空/写0，再写入加点；调整列清 0——义体带来的调整由玩家下载后手工填）
+  const colSets={ "W":[5,6,7,8,9,11,12,13,15,16,18,19,20,21,23,24,25,26,27,28,29], "AC":[5,6,7,8,9,10,11,12,13,14,15,16,20,21,22,23,24,25,26], "AI":[3,4,8,10,11,12,13,14,16,17,18,19,20,21,22,23,24,26,27,28,29,30,31,32,33,34,37,38,39,40] };
+  for(const [col,rows] of Object.entries(colSets)){
+    for(const r of rows){
+      const hit=SKILLS.find(s=>s[2]===col&&s[0]===r);
+      set("人物卡",`${col}${r}`,hit?(S.skills[hit[1]]||0):0);
+      // 调整列清 0（义体带来的调整由玩家下载后手工填）
+      set("人物卡",`${({W:"V",AC:"AB",AI:"AH"})[col]}${r}`,0);
+    }
+  }
+  // 母语调整默认4（鲨包人物卡 AB24）
+  set("人物卡","AB24",4);
+  // 当前HP/人性（手动格）
+  const hp=10+Math.ceil(((S.attrs.BODY||0)+(S.attrs.WILL||0))/2)*5;
+  set("人物卡","K30",hp);
+  const humCap=Math.max(0,S.attrs.EMP*10-S.cyber.reduce((s,c)=>s+(c.cap||0),0));
+  set("人物卡","K32",Math.max(0,humCap-S.cyber.reduce((s,c)=>s+(c.h||0),0)));
+  // 武器卡（4 组）
+  for(let i=0;i<4;i++){
+    const r=WROWS[i],w=S.weapons[i];
+    if(!w){["C","D","E","F","G","H","I","J","K","L","M","N"].forEach(c=>set("武器卡",`${c}${r}`,""));continue;}
+    set("武器卡",`C${r}`,w.name||"");set("武器卡",`D${r}`,w.reliability||"中");set("武器卡",`E${r}`,w.type||"");
+    set("武器卡",`F${r}`,w.rof??1);set("武器卡",`G${r}`,w.mag||"");set("武器卡",`H${r}`,w.precision??0);
+    set("武器卡",`I${r}`,(w.hands||1)>=2?"双":"单");set("武器卡",`J${r}`,w.slots??"");set("武器卡",`K${r}`,w.auto||"");
+    set("武器卡",`L${r}`,w.damage||"");set("武器卡",`M${r}`,w.ammo||"手枪");set("武器卡",`N${r}`,w.hidden?"是":"否");
+  }
+  // 防具卡（作战区 5-12）
+  for(let i=0;i<8;i++){
+    const r=5+i,a=S.armor[i];
+    if(!a){["D","E","F","G","H","I","J","K"].forEach(c=>set("防具卡",`${c}${r}`,""));continue;}
+    set("防具卡",`D${r}`,a.name||"");set("防具卡",`E${r}`,a.rarity||"N");set("防具卡",`F${r}`,a.legal||"Y");
+    set("防具卡",`G${r}`,a.sp??0);set("防具卡",`H${r}`,a.ev??0);set("防具卡",`I${r}`,a.pocket??"/");
+    set("防具卡",`J${r}`,a.desc??"/");set("防具卡",`K${r}`,a.trait??"");
+  }
+  // 义体卡（7-55）
+  for(let i=0;i<49;i++){
+    const r=7+i,c=S.cyber[i];
+    if(!c){["D","E","G","I","J"].forEach(x=>set("义体卡",`${x}${r}`,""));continue;}
+    set("义体卡",`D${r}`,c.slot||"");set("义体卡",`E${r}`,c.plug||"");set("义体卡",`G${r}`,c.name||"");
+    set("义体卡",`I${r}`,c.h||0);set("义体卡",`J${r}`,c.cap||0);
+  }
+  // 资金
+  set("购物助手","J53",S.money.sponsor||0);
+  set("购物助手","J54",S.money.starting||0);
+}
+
+async function downloadXlsx(){
+  status("模板加载中…");
+  try{
+    const resp=await fetch("assets/鲨鱼包全自动卡V1.91.xlsx");
+    if(!resp.ok)throw new Error("模板 HTTP "+resp.status);
+    const buf=await resp.arrayBuffer();
+    const wb=XLSX.read(buf,{type:"array",cellStyles:true});
+    fillSheet(wb);
+    XLSX.writeFile(wb,`${S.info.name||"角色"}_鲨鱼包全自动卡.xlsx`,{bookType:"xlsx"});
+    status("xlsx 已下载：请用电脑版 WPS/Excel 打开让公式重算");
+  }catch(e){
+    status("❌ 下载失败："+e.message+"（若用 file:// 打开本页，模板 fetch 会被浏览器拦截，请用本地静态服务器或网页版打开）");
+  }
+}
+function status(t){document.getElementById("status").textContent=t;const s2=document.getElementById("st2");if(s2)s2.textContent=t;}
+
+document.getElementById("dlXlsx").onclick=downloadXlsx;
+document.getElementById("dlJson").onclick=downloadJson;
+render();
+</script>
+</body>
+</html>
