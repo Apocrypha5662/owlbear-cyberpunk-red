@@ -1,0 +1,16 @@
+{
+  "manifest_version": 1,
+  "name": "CPR导入",
+  "version": "1.1.0",
+  "description": "角色导入双通道：写卡网页导出的角色JSON一键导入，或上传鲨鱼包全自动卡xlsx解析（SheetJS）；含规则数据包开关与设置。",
+  "icon": "icon-import.svg",
+  "author": "owlbear-cpr",
+  "action": {
+    "title": "CPR导入",
+    "icon": "icon-import.svg",
+    "popover": "popover.html?tab=import&only=import,settings",
+    "width": 420,
+    "height": 680
+  },
+  "background_url": "background-empty.js"
+}
