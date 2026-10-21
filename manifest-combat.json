@@ -1,0 +1,16 @@
+{
+  "manifest_version": 1,
+  "name": "CPR战斗",
+  "version": "1.1.0",
+  "description": "赛博朋克RED战斗全流程：射程DV/瞄准/点射/扫射/抑制、命中部位、防具削甲、重创表、死亡豁免、令牌HP伤势状态。鲨鱼包数值优先。",
+  "icon": "icon-combat.svg",
+  "author": "owlbear-cpr",
+  "action": {
+    "title": "CPR战斗",
+    "icon": "icon-combat.svg",
+    "popover": "popover.html?tab=combat&only=combat,token",
+    "width": 430,
+    "height": 680
+  },
+  "background_url": "background-empty.js"
+}
